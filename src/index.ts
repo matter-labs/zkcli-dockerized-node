@@ -46,9 +46,11 @@ export default class SetupModule extends ModuleNode {
 
         const makeInfoLog = () => {
           Logger.info(
-            chalk.gray`Contracts not deployed yet. Checking again in ${retryTime / 1000}s... (Elapsed time: ${
-              elapsedTime / 1000
-            }s)`
+            chalk.gray(
+              `Contracts not deployed yet. Checking again in ${retryTime / 1000}s... (Elapsed time: ${
+                elapsedTime / 1000
+              }s)`
+            )
           );
         };
 
