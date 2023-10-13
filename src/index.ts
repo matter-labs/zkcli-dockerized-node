@@ -16,8 +16,12 @@ export default class SetupModule extends ModuleNode {
   }
 
   gitUrl = "https://github.com/matter-labs/local-setup.git";
-  gitFolder = path.join(this.dataDirPath, "local-setup");
-  composeFile = path.join(this.gitFolder, "docker-compose.yml");
+  get gitFolder() {
+    return path.join(this.dataDirPath, "./local-setup");
+  }
+  get composeFile() {
+    return path.join(this.gitFolder, "docker-compose.yaml");
+  }
 
   get nodeInfo() {
     return {
