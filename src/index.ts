@@ -20,7 +20,7 @@ export default class SetupModule extends ModuleNode {
     return path.join(this.dataDirPath, "./local-setup");
   }
   get composeFile() {
-    return path.join(this.gitFolder, "docker-compose.yaml");
+    return path.join(this.gitFolder, "docker-compose.yml");
   }
 
   get nodeInfo() {
