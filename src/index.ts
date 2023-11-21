@@ -1,4 +1,5 @@
 import chalk from "chalk";
+import ora from "ora";
 import path from "path";
 import { ModuleNode, files, git, docker, Logger } from "zksync-cli/lib";
 
@@ -42,21 +43,21 @@ export default class SetupModule extends ModuleNode {
     return (await docker.compose.status(this.composeFile)).length ? true : false;
   }
   waitForContractsDeployment() {
-    const retryTime = 15000;
+    const retryTime = 1000;
     let elapsedTime = 0;
+    const spinner = ora().start();
+    const millisecondsToTime = (ms: number) => {
+      const minutes = Math.floor(ms / 60000);
+      const seconds = ((ms % 60000) / 1000).toFixed(0);
+      return `${minutes}:${seconds.padStart(2, "0")}`;
+    };
+    const updateSpinner = () => {
+      spinner.text = `Deploying contracts... ${chalk.gray(`(Elapsed time: ${millisecondsToTime(elapsedTime)})`)}`;
+    };
+    updateSpinner();
     return new Promise<void>((resolve, reject) => {
       const interval = setInterval(async () => {
         elapsedTime += retryTime;
-
-        const makeInfoLog = () => {
-          Logger.info(
-            chalk.gray(
-              `Contracts not deployed yet. Checking again in ${retryTime / 1000}s... (Elapsed time: ${
-                elapsedTime / 1000
-              }s)`
-            )
-          );
-        };
 
         try {
           const response = await fetch(`${this.nodeInfo.l2.rpcUrl}/zks_getMainContract`, {
@@ -76,15 +77,16 @@ export default class SetupModule extends ModuleNode {
             const data = await response.json();
             if (data.result) {
               clearInterval(interval);
+              spinner.succeed("Contracts deployed!");
               resolve();
             } else {
               Logger.debug("Received unexpected data from zks_getMainContract:", data);
             }
           } else {
-            makeInfoLog();
+            updateSpinner();
           }
         } catch (error) {
-          makeInfoLog();
+          updateSpinner();
           Logger.debug("Error while fetching zks_getMainContract:");
           Logger.debug(error);
         }
@@ -92,6 +94,7 @@ export default class SetupModule extends ModuleNode {
         const isNodeRunning = await this.isRunning();
         if (!isNodeRunning) {
           clearInterval(interval);
+          spinner.fail("Deployment failed!");
           reject("Dockerized Node stopped running. Installation failed.");
         }
       }, retryTime);
@@ -100,7 +103,7 @@ export default class SetupModule extends ModuleNode {
   async install() {
     await git.cloneRepo(this.gitUrl, this.gitFolder);
     await docker.compose.up(this.composeFile); // using "up" instead of build since it might take a while for zkSync contracts to be deployed
-    Logger.info(chalk.yellow("Waiting for zkSync contracts to be deployed... It might take 5 - 10min..."));
+    Logger.info(chalk.yellow("Waiting for zkSync contracts to be deployed... Usually it takes 5 - 10min..."));
     await this.waitForContractsDeployment();
     Logger.info(chalk.green("zkSync contracts deployed!"));
   }
