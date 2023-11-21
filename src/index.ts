@@ -52,6 +52,7 @@ export default class SetupModule extends ModuleNode {
       return `${minutes}:${seconds.padStart(2, "0")}`;
     };
     const updateSpinner = () => {
+      if (!spinner.isSpinning) return;
       spinner.text = `Deploying contracts... ${chalk.gray(`(Elapsed time: ${millisecondsToTime(elapsedTime)})`)}`;
     };
     updateSpinner();
@@ -103,9 +104,8 @@ export default class SetupModule extends ModuleNode {
   async install() {
     await git.cloneRepo(this.gitUrl, this.gitFolder);
     await docker.compose.up(this.composeFile); // using "up" instead of build since it might take a while for zkSync contracts to be deployed
-    Logger.info(chalk.yellow("Waiting for zkSync contracts to be deployed... Usually it takes 5 - 10min..."));
+    Logger.info(chalk.yellow("Waiting for zkSync contracts to be deployed... Usually it takes 5 - 15min..."));
     await this.waitForContractsDeployment();
-    Logger.info(chalk.green("zkSync contracts deployed!"));
   }
 
   async isRunning() {
