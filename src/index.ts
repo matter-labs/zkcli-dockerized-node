@@ -28,11 +28,11 @@ export default class SetupModule extends ModuleNode {
     return {
       l1: {
         chainId: 9,
-        rpcUrl: "http://localhost:8545",
+        rpcUrl: "http://127.0.0.1:8545",
       },
       l2: {
         chainId: 270,
-        rpcUrl: "http://localhost:3050",
+        rpcUrl: "http://127.0.0.1:3050",
       },
     };
   }
