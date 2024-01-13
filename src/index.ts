@@ -26,13 +26,15 @@ export default class SetupModule extends ModuleNode {
 
   get nodeInfo() {
     return {
-      l1: {
-        chainId: 9,
+      id: 270,
+      name: "Dockerized local node",
+      network: "dockerized-node",
+      rpcUrl: "http://127.0.0.1:3050",
+      l1Chain: {
+        id: 9,
+        name: "L1 Local",
+        network: "l1-local",
         rpcUrl: "http://127.0.0.1:8545",
-      },
-      l2: {
-        chainId: 270,
-        rpcUrl: "http://127.0.0.1:3050",
       },
     };
   }
@@ -61,7 +63,7 @@ export default class SetupModule extends ModuleNode {
         elapsedTime += retryTime;
 
         try {
-          const response = await fetch(`${this.nodeInfo.l2.rpcUrl}/zks_getMainContract`, {
+          const response = await fetch(`${this.nodeInfo.rpcUrl}/zks_getMainContract`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -118,11 +120,11 @@ export default class SetupModule extends ModuleNode {
     return [
       {
         text: "zkSync Node (L2):",
-        list: [`Chain ID: ${this.nodeInfo.l2.chainId}`, `RPC URL: ${this.nodeInfo.l2.rpcUrl}`],
+        list: [`Chain ID: ${this.nodeInfo.id}`, `RPC URL: ${this.nodeInfo.rpcUrl}`],
       },
       {
         text: "Ethereum Node (L1):",
-        list: [`Chain ID: ${this.nodeInfo.l1.chainId}`, `RPC URL: ${this.nodeInfo.l1.rpcUrl}`],
+        list: [`Chain ID: ${this.nodeInfo.l1Chain.id}`, `RPC URL: ${this.nodeInfo.l1Chain.rpcUrl}`],
       },
       `Rich accounts: ${path.join(this.gitFolder, "rich-wallets.json")}`,
     ];
