@@ -5,7 +5,15 @@ import { ModuleNode, files, git, docker, Logger } from "zksync-cli/lib";
 
 import type { ConfigHandler } from "zksync-cli/lib";
 
-export default class SetupModule extends ModuleNode {
+type ModuleConfig = {
+  version?: string;
+};
+
+let latestVersion: string | undefined;
+
+const REPO_NAME = "matter-labs/local-setup";
+
+export default class SetupModule extends ModuleNode<ModuleConfig> {
   constructor(config: ConfigHandler) {
     super(
       {
@@ -16,7 +24,7 @@ export default class SetupModule extends ModuleNode {
     );
   }
 
-  gitUrl = "https://github.com/matter-labs/local-setup.git";
+  gitUrl = `https://github.com/${REPO_NAME}.git`;
   get gitFolder() {
     return path.join(this.dataDirPath, "./local-setup");
   }
@@ -39,11 +47,23 @@ export default class SetupModule extends ModuleNode {
     };
   }
 
+  get version() {
+    return this.moduleConfig.version ?? undefined;
+  }
+
+  async getLatestVersion(): Promise<string> {
+    if (!latestVersion) {
+      latestVersion = await git.getLatestCommitHash(REPO_NAME);
+    }
+    return latestVersion;
+  }
+
   async isInstalled() {
     if (!files.fileOrDirExists(this.gitFolder)) return false;
 
     return (await docker.compose.status(this.composeFile)).length ? true : false;
   }
+
   waitForContractsDeployment() {
     const retryTime = 1000;
     let elapsedTime = 0;
@@ -103,19 +123,28 @@ export default class SetupModule extends ModuleNode {
       }, retryTime);
     });
   }
+
   async install() {
+    const latestVersion = await this.getLatestVersion();
+
     await git.cloneRepo(this.gitUrl, this.gitFolder);
     await docker.compose.up(this.composeFile); // using "up" instead of build since it might take a while for zkSync contracts to be deployed
     Logger.info(chalk.yellow("Waiting for zkSync contracts to be deployed... Usually it takes 5 - 15min..."));
     await this.waitForContractsDeployment();
+    this.setModuleConfig({
+      ...this.moduleConfig,
+      version: latestVersion,
+    });
   }
 
   async isRunning() {
     return (await docker.compose.status(this.composeFile)).some(({ isRunning }) => isRunning);
   }
+
   async start() {
     await docker.compose.up(this.composeFile);
   }
+
   getStartupInfo() {
     return [
       {
